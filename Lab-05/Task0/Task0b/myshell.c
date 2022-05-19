@@ -52,10 +52,11 @@ int main(int argc, char **argv){
 void execute(cmdLine *pCmdLine){
 	int ret_val = 0;
 	pid_t pid = -1;
+	char* name = pCmdLine->arguments[0];
 	if(pCmdLine != NULL){
 		if(strcmp(pCmdLine->arguments[0], "quit") == 0){
 			if(debug_flag){
-			fprintf(stderr, "PID: %d, command: quit\n", getpid());
+				fprintf(stderr, "PID: %d, command: quit\n", getpid());
 			}
 			exit_flag = 1;
 			return;
@@ -63,7 +64,6 @@ void execute(cmdLine *pCmdLine){
 
 		if(strcmp(pCmdLine->arguments[0], "cd") == 0){
 			/*char * const *args = &(pCmdLine->arguments[1]);*/
-			
 			
 			ret_val = chdir(pCmdLine->arguments[1]);
 			if(debug_flag){
@@ -82,9 +82,9 @@ void execute(cmdLine *pCmdLine){
 		/* if forked so only child will execute */
 		if(pid == 0){
 			/*if child -> execute*/
-			ret_val = execvp(pCmdLine->arguments[0],pCmdLine->arguments);
+			ret_val = execvp(pCmdLine->arguments[0], pCmdLine->arguments);
 			if(debug_flag){
-				fprintf(stderr, "PID: %d, command: %s\n", getpid(),pCmdLine->arguments[0]);
+				fprintf(stderr, "PID: %d, command: %s\n", getpid(), name);
 			}
 			if(ret_val == -1){
 				char * path = pCmdLine->arguments[0];
