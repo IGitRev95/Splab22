@@ -4,6 +4,7 @@
 #include "LineParser.h"
 #include <string.h>
 #include <sys/wait.h>
+#include <stdlib.h>
 
 #define USER_LINE_BUFFER_SIZE 2048
 
@@ -66,16 +67,16 @@ void execute(cmdLine *pCmdLine){
 			if(ret_val == -1){
 				char * path = pCmdLine->arguments[0];
 				perror("failed in"+*path);
-				_exit(1);
+				exit(1);
 			}
-			_exit(ret_val);
+			exit(ret_val);
 		}else{
 			/*if parent -> wait for child execution to end*/
 			pid = waitpid(pid, &ret_val,0);
 			if(ret_val == -1){
 				char * path = pCmdLine->arguments[0];
 				perror("failed in"+*path);
-				_exit(1);
+				exit(1);
 			}
 		}
 	}
