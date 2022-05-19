@@ -18,17 +18,21 @@ complS = nasm -g -f elf -w+all -o
 all: myshell
 
 # (target) : (dependencies)
-myshell : looper.o LineParser.o 
+myshell : myshell.o  LineParser.o # looper.o
 #	@echo "making exe"
 	$(complC) myshell $^
+
+myshell.o : myshell.c 
+#	@echo "making mainC.o"
+	$(compC) myshell.o $^
 
 LineParser.o : LineParser.c
 #	@echo "making mainC.o"
 	$(compC) LineParser.o $^
 
-looper.o : looper.c 
+#looper.o : looper.c 
 #	@echo "making mainC.o"
-	$(compC) looper.o $^
+#	$(compC) looper.o $^
 
 clean:
 	rm -f *.o myshell
