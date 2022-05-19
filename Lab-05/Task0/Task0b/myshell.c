@@ -84,7 +84,7 @@ void execute(cmdLine *pCmdLine){
 			/*if child -> execute*/
 			ret_val = execvp(pCmdLine->arguments[0],pCmdLine->arguments);
 			if(debug_flag){
-				fprintf(stdout, "PID: %d, command: %s\n", getpid(),pCmdLine->arguments[0]);
+				fprintf(stderr, "PID: %d, command: %s\n", getpid(),pCmdLine->arguments[0]);
 			}
 			if(ret_val == -1){
 				char * path = pCmdLine->arguments[0];
@@ -92,14 +92,14 @@ void execute(cmdLine *pCmdLine){
 				_exit(1);
 			}
 			exit(ret_val);
-		}else{
-			/*if parent -> wait for child execution to end*/
-			pid = waitpid(pid, &ret_val,0);
-			if(ret_val == -1){
-				char * path = pCmdLine->arguments[0];
-				perror("failed in"+*path);
-				_exit(1);
-			}
 		}
+		/*if parent -> wait for child execution to end*/
+		pid = waitpid(pid, &ret_val,0);
+		if(ret_val == -1){
+			char * path = pCmdLine->arguments[0];
+			perror("failed in"+*path);
+			_exit(1);
+		}
+		
 	}
 }
