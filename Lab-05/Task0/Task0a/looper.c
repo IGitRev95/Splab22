@@ -44,7 +44,7 @@ int main(int argc, char **argv){
 }
 
 void execute(cmdLine *pCmdLine){
-	int ret_val = 0, fork_it = 1;
+	int ret_val = 0;
 	pid_t pid = -1;
 	if(pCmdLine != NULL){
 		if(strcmp(pCmdLine->arguments[0], "quit") == 0){
@@ -53,13 +53,18 @@ void execute(cmdLine *pCmdLine){
 		}
 
 		if(strcmp(pCmdLine->arguments[0], "cd") == 0){
-			fork_it = 0;
+			/*char * const *args = &(pCmdLine->arguments[1]);*/
+			ret_val = chdir(pCmdLine->arguments[1]);
+			if(ret_val == -1){
+				char * path = pCmdLine->arguments[0];
+				perror("failed in"+*path);
+				exit(1);
+			}
+			return;
 		}
 
 		/* if cmd require forking */
-		if(fork_it){
-			pid = fork();
-		}
+		pid = fork();
 		/* if forked so only child will execute */
 		if(pid == 0){
 			/*if child -> execute*/
