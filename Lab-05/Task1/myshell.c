@@ -92,7 +92,7 @@ void execute(cmdLine *pCmdLine){
 		}
 		/*if parent -> wait for child execution to end*/
 		if(debug_flag){
-			fprintf(stderr, "PID: %d, command: %s\n", getpid(), name);
+			fprintf(stderr, "PID: %d, command: %s\n", pid, name);
 		}
 		if(pCmdLine->blocking){
 			pid = waitpid(pid, &ret_val,0);
