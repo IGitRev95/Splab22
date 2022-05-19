@@ -90,11 +90,14 @@ void execute(cmdLine *pCmdLine){
 				char * path = pCmdLine->arguments[0];
 				perror("failed in"+*path);
 				_exit(1);
-			}
+			}	
 			exit(ret_val);
 		}
 		/*if parent -> wait for child execution to end*/
-		pid = waitpid(pid, &ret_val,0);
+		
+		if(pCmdLine->blocking){
+			pid = waitpid(pid, &ret_val,0);
+		}
 		if(ret_val == -1){
 			char * path = pCmdLine->arguments[0];
 			perror("failed in"+*path);
