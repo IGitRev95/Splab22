@@ -7,13 +7,26 @@
 #include <stdlib.h>
 
 #define USER_LINE_BUFFER_SIZE 2048
+#define TERMINATED -1
+#define RUNNING 1
+#define SUSPENDED 0
 
-/*t0a*/
+typedef struct process{
+	cmdLine* cmd; /* the parsed command line*/
+	pid_t pid; /* the process id that is
+	running the command*/
+	int status; /* status of the process:
+	RUNNING/SUSPENDED/TERMINATED */
+	struct process *next; /* next process in chain */
+} process;
 
 void execute(cmdLine *pCmdLine);
+void addProcess(process** process_list, cmdLine* cmd, pid_t pid);
+void printProcessList(process** process_list);
 
 int exit_flag = 0;
 int debug_flag = 0;
+process** process_list = NULL;
 
 int main(int argc, char **argv){
 	char user_line_buff[USER_LINE_BUFFER_SIZE], directory_path_buff[PATH_MAX];
@@ -77,6 +90,15 @@ void execute(cmdLine *pCmdLine){
 			return;
 		}
 
+		if(strcmp(pCmdLine->arguments[0], "showprocs") == 0){
+			/*char * const *args = &(pCmdLine->arguments[1]);*/
+			printProcessList(process_list);
+			if(debug_flag){
+				fprintf(stderr, "PID: %d, command: showprocs\n", getpid());
+			}
+			return;
+		}
+
 		/* if cmd require forking */
 		pid = fork();
 		/* if forked so only child will execute */
@@ -92,7 +114,7 @@ void execute(cmdLine *pCmdLine){
 		}
 		/*if parent -> wait for child execution to end*/
 		if(debug_flag){
-			fprintf(stderr, "PID: %d, command: %s\n", getpid(), name);
+			fprintf(stderr, "PID: %d, command: %s\n", pid, name);
 		}
 		if(pCmdLine->blocking){
 			pid = waitpid(pid, &ret_val,0);
@@ -104,4 +126,29 @@ void execute(cmdLine *pCmdLine){
 		}
 		
 	}
+}
+
+void addProcess(process** process_list, cmdLine* cmd, pid_t pid){
+	process* procToAdd = (malloc(sizeof(process)));
+	procToAdd->cmd = cmd;
+	procToAdd->pid = pid;
+	procToAdd->status = RUNNING;
+	procToAdd->next = NULL;
+	if(*process_list == NULL){
+		*process_list = procToAdd;
+	}
+	else {
+		(*process_list)->next = procToAdd;
+	}
+}
+
+void printProcessList(process** process_list){
+	process* temp_proc = *process_list;
+	int proc_index = 0;
+	printf("#\t PID\t Command\t Status(-1=Terminated, 0=Suspended, 1=Running)\n");
+	while(temp_proc != NULL){
+		printf("%d\t, %d\t, %s\t, %d\t", proc_index, temp_proc->pid, temp_proc->cmd->arguments[0], temp_proc->status);
+		temp_proc = temp_proc->next;
+		proc_index++;
+	}	
 }
