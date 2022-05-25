@@ -13,7 +13,7 @@
 
 int main(int argc, char **argv){
 	int pipefd[2];
-	pid_t cpid;
+	pid_t cpid1,cpid2;
 	char buf;
 	int ret_val;
 
@@ -22,24 +22,43 @@ int main(int argc, char **argv){
 		exit(EXIT_FAILURE);
 	}
 
-	cpid = fork();
-	if (cpid == -1) {
+	cpid1 = fork();
+	if (cpid1 == -1) {
 		perror("fork");
 		exit(EXIT_FAILURE);
 	}
 
-	if (cpid == 0) {    /* Child reads from pipe */
-		close(pipefd[0]);
-		write(pipefd[1],"hello",strlen("hello"));
-		close(pipefd[1]);          /* Close unused write end */
-		exit(EXIT_SUCCESS);
-	} else {            /* Parent writes argv[1] to pipe */
-		waitpid(cpid,&ret_val,0);		/* Wait for child */
-		close(pipefd[1]);          /* Close unused read end */
-		while (read(pipefd[0], &buf, 1) != 0)
-			putchar(buf);
-		printf("\n");
-		close(pipefd[0]);          /* Reader will see EOF */               
-		exit(EXIT_SUCCESS);
+	if (cpid1 == 0) {    /* Child reads from pipe */
+		close(stdout);
+		dup(pipefd[1]);  /* dup copy fd to lowest fd avaliable and its stdout since it has been closed */
+		/* now stdout is the write end of the pipe */
+		close(pipefd[1]);
+		char* argv[3] = {"ls", "-l", 0};
+		execvp(argv[0], argv);
+        _exit(0);
+	} 
+	if(cpid1>0) {            /* Parent writes argv[1] to pipe */
+		
+		cpid2 = fork();
+		if (cpid2 == -1) {
+			perror("fork");
+			exit(EXIT_FAILURE);
+		}
+
+		if (cpid2 == 0) {    /* Child reads from pipe */
+			close(stdin);
+			int dup_pipe = dup(pipefd[0]);
+			close(pipefd[0]);
+			char* argv[4] = {"tail", "-n","2", 0};
+			execvp(argv[0], argv);
+        	_exit(0);
+		} 
+		
+		if(cpid2>0) { 
+			close(pipefd[0]);
+			waitpid(cpid1,&ret_val,0);		/* Wait for child */
+			waitpid(cpid2,&ret_val,0);		/* Wait for child */
+			exit(EXIT_SUCCESS);
+		}
 	}
 }

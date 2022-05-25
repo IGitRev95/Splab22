@@ -24,7 +24,7 @@ mypipeline : mypipeline.o  LineParser.o # looper.o
 
 mypipeline.o : mypipeline.c 
 #	@echo "making mainC.o"
-	$(compC) mypmypipelineipe.o $^
+	$(compC) mypipeline.o $^
 
 LineParser.o : LineParser.c
 #	@echo "making mainC.o"
