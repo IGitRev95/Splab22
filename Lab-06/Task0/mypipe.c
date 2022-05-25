@@ -14,7 +14,7 @@
 int main(int argc, char **argv){
 	int pipefd[2];
 	pid_t cpid;
-	char buf[6];
+	char buf;
 	int ret_val;
 
 	if (pipe(pipefd) == -1) {
@@ -30,14 +30,14 @@ int main(int argc, char **argv){
 
 	if (cpid == 0) {    /* Child reads from pipe */
 		close(pipefd[0]);
-		fprintf(pipefd[1],"hello\n");
+		write(pipefd[1],"hello",strlen("hello"));
 		close(pipefd[1]);          /* Close unused write end */
 		exit(EXIT_SUCCESS);
 	} else {            /* Parent writes argv[1] to pipe */
 		waitpid(cpid,&ret_val,0);		/* Wait for child */
 		close(pipefd[1]);          /* Close unused read end */
-		while (read(pipefd[0], buf, 1) > 0)
-			printf("%s",buf);
+		while (read(pipefd[0], &buf, 1) != 0)
+			putchar(buf);
 		printf("\n");
 		close(pipefd[0]);          /* Reader will see EOF */               
 		exit(EXIT_SUCCESS);
