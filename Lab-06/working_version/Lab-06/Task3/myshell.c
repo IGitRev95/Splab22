@@ -69,10 +69,7 @@ int main(int argc, char **argv){
 }
 
 void execute(cmdLine *pCmdLine){
-	FILE* input = stdin;
-    FILE* output = stdout;
-    FILE* temp_file;
-    int ret_val = 0, fd = -1, new_pfd1 = -1, new_pfd0 = -1;
+    int ret_val = 0;
 	pid_t pid = -1;
 	char* name = pCmdLine->arguments[0];
 	if(pCmdLine != NULL){
@@ -174,7 +171,7 @@ void catit(cmdLine *pCmdLine){
     FILE* input = stdin;
     FILE* output = stdout;
     FILE* temp_file;
-    int ret_val = 0, fd = -1, new_pfd1 = -1, new_pfd0 = -1;
+    int fd = -1, new_pfd1 = -1, new_pfd0 = -1;
     
     if(pCmdLine->outputRedirect != NULL){
         temp_file = fopen(pCmdLine->outputRedirect, "a+");
@@ -194,7 +191,7 @@ void catit(cmdLine *pCmdLine){
         close(fd);                    
     }
 
-    ret_val = execvp(pCmdLine->arguments[0], pCmdLine->arguments);
+    execvp(pCmdLine->arguments[0], pCmdLine->arguments);
 
     if(pCmdLine->outputRedirect != NULL){
         dup2(new_pfd1, 1);
@@ -212,13 +209,11 @@ void catit(cmdLine *pCmdLine){
 
 
 void pipeLine(cmdLine *cmd_line){
-    FILE* input = stdin;
-    FILE* output = stdout;
     cmdLine *local_cmdLine = cmd_line;
-    int pipe_counter = 0, fd = -1, new_pfd = -1, ret_val = -1;
+    int pipe_counter = 0;
     int pipefd[2];
     int **pipe_arr;
-    pid_t c1pid, c2pid;
+    pid_t c1pid;
     
     while(local_cmdLine->next != NULL){
         pipe_counter++;
@@ -228,7 +223,6 @@ void pipeLine(cmdLine *cmd_line){
     pipe_arr = createPipes(pipe_counter);
     int i = 0;
     while(cmd_line != NULL){        
-        // maybe every i (!= 1) loop take the read-end of the i-1 loop????????????????????????????????//
         
         c1pid = fork();
         if (c1pid == 0) { 
@@ -253,7 +247,6 @@ void pipeLine(cmdLine *cmd_line){
             } else {
                 execvp(cmd_line->arguments[0], cmd_line->arguments); // c1pid executed whilst its output is pipe[0];
             }            
-            // if(ret_val == -1){  char * path = cmd_line->arguments[0]; perror("failed in"+*path);  _exit(1);     }	
             _exit(0);
         } else {
             if(c1pid < 0){
@@ -269,44 +262,9 @@ void pipeLine(cmdLine *cmd_line){
         cmd_line = cmd_line->next;
         i++;
     }
-    /*execute(cmd_line);*/
     releasePipes(pipe_arr, pipe_counter);
 }
 
-
-
-
-/*
-
-commandc = 0
-while( command ){
-    pid = fork()
-    if( pid == 0 ){
-        //child gets input from the previous command,
-            // if it's not the first command 
-        if( not first command ){
-            if( dup2(pipefds[(commandc-1)*2], 0) < ){
-                perror and exit
-            }
-        }
-         //child outputs to next command, if it's not
-            //the last command 
-        if( not last command ){
-            if( dup2(pipefds[commandc*2+1], 1) < 0 ){
-                perror and exit
-            }
-        }
-        close all pipe-fds
-        execvp
-        perror and exit
-    } else if( pid < 0 ){
-        perror and exit
-    }
-    cmd = cmd->next
-    commandc++
-}
-
-*/
 
 int ** createPipes(int nPipes){
     int** pipes;
