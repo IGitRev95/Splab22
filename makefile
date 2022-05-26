@@ -13,7 +13,9 @@ compC = gcc -m32 -g -Wall -c -o
 complC = gcc -m32 -g -Wall -o
 complS = nasm -g -f elf -w+all -o
 
-.PHONY : clean
+nasmDis =  ndisasm -b 32
+
+.PHONY : clean, bindis
 
 all: exeFile
 
@@ -29,6 +31,9 @@ mainC.o : mainC.c
 asm.o : asm.s
 #	@echo "making asm.o"
 	$(complS) asm.o asm.s
+
+bindis:
+	$(nasmDis) bin_file > bin_file.asm
 
 clean:
 	rm -f *.o exeFile

