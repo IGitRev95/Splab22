@@ -121,12 +121,13 @@ void execute(cmdLine *pCmdLine){
                 if(kill(pid_to_care,SIGTSTP)==-1)
                         perror("kill");
                 sleep(seconds_to_nap);
-                if(kill(pid,SIGCONT)==-1)
+                if(kill(pid_to_care,SIGCONT)==-1)
                         perror("kill");
                 _exit(0);                
             } /* else{
                 addProcess(process_list, pCmdLine, pid);
             }*/
+			
 			return;
 		}
 		

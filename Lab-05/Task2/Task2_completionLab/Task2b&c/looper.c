@@ -26,7 +26,7 @@ void handler_sigtstp(int signum){
 	printf("received signal: %s\n", signame);
 	signal(signum, SIG_DFL);
 	raise(signum);
-	signal(signum, handler_sigcont);
+	signal(SIGCONT, handler_sigint);
 }
 
 void handler_sigint(int signum){
@@ -41,5 +41,5 @@ void handler_sigcont(int signum){
 	printf("received signal: %s\n", signame);
 	signal(signum, SIG_DFL);
 	raise(signum);
-	signal(signum, handler_sigtstp);
+	signal(SIGTSTP, handler_sigcont);
 }
