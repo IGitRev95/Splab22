@@ -1,11 +1,10 @@
 #! /usr/bin/awk -f
 
-BEGIN {print "Task04"}
+BEGIN {print "Task04"; OFS = "\t"}
 {
-    print $1, " "; for (i=NF+1;i>1;i--) {printf $(i)}
+    printf $1
+    for (i=NF;i>1;i--) {
+        printf " " $(i) "\t"
+    }
+    printf "\n"
 }
-# for(i=NF;i>0;i--){printf $(i)}}
-#    for(i=NF;i>1;i--){
-#        printf $(i) " "
-#        }
-#}
