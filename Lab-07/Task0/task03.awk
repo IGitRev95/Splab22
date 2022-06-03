@@ -5,7 +5,4 @@ BEGIN {
     print "Task03"
     
 }
-/a/
-{
-    print $2"\t"$4
-}
+$2 ~ /[a]/ {print $2"\t"$4}
