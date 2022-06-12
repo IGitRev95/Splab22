@@ -10,4 +10,4 @@
 5.  Q: Does the symbol main occur in the file? If so, where is it mapped to in virtual memory?
     1.  A: According to the symbol table `main` is appearing the file and it is maped to `0x08048388` .
 6.  Q: Where in the file does the code of function "main" start?
-    1.  A: Not Sure
+    1.  A: main offset in file by formula: `<func_VA> - <.text_VA> + <.text_offset>`. in our case: `0x388`
