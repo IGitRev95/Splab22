@@ -7,6 +7,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <string.h>
 
 #define STDIN 0
 #define STDOUT 1
@@ -81,7 +82,6 @@ void examine(){
     if(Currentfd >= 3){  /* 0-2 is the default file descriptors */
         close(Currentfd);
     }
-    
     Currentfd = open(file_name, O_RDONLY);
     file_size = lseek(Currentfd,0,SEEK_END);
     lseek(Currentfd,0,SEEK_SET);
