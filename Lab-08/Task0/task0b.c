@@ -25,9 +25,14 @@ void examine();
 void print_section_names();
 void print_symbols();
 void quit();
+void global_close();
 
 int debug_flag = 0;
 int Currentfd = -2; /* -2 just for initial value generally defeckt will be indicated by -1 */
+void *curr_addr = NULL;
+size_t curr_file_size;
+char curr_file_name[32];
+
 void* map_start;
 
 
@@ -59,11 +64,10 @@ int main(int argc, char **argv){
 }
 /* simple method to fill not implemented yet funcitons */
 void stubs(){
-    printf("Not implemented yet!");
+    printf("Not implemented yet!\n");
 }
 
 void debug(){
-   debug_flag = !debug_flag; 
    if(debug_flag){
     printf("Debug flag is now off\n");
    }
@@ -74,64 +78,79 @@ void debug(){
 }
 
 void examine(){
-    int buff_index = 0;     
-    long file_size;
-    char file_name[32], c;
+    int buff_index = 0, i, elf_file_flag;     
+    char c;
+    Elf32_Ehdr *elf_head;
+    unsigned char *elf_ident;
+    int ascii_magic_num[] = {127, 69, 76, 70};
+    char* encoding[] = {"Little Endian\0", "Big Endian\0", "Invalid\0"};
+    
     printf("Enter ELF file name:\n");
     while (((c = fgetc(stdin)) != '\n') && buff_index <31 )
     {
-        file_name[buff_index] = c;
+        curr_file_name[buff_index] = c;
         buff_index++;
     }
-    file_name[buff_index] = '\0';
+    curr_file_name[buff_index] = '\0';
 
     if(Currentfd >= 3){  /* 0-2 is the default file descriptors */
-        close(Currentfd);
+        global_close();
     }
     
-    Currentfd = open(file_name, O_RDWR);
-    file_size = lseek(Currentfd,0,SEEK_END);
+    Currentfd = open(curr_file_name, O_RDWR);
+    curr_file_size = lseek(Currentfd,0,SEEK_END);
     lseek(Currentfd,0,SEEK_SET);
 
-    map_start = mmap(NULL,file_size,PROT_READ,MAP_SHARED,Currentfd,0); /* PORT_READ is the memory protection like fopen with 'r' flag */  
+    if(debug_flag){
+        
+    }
+    
+    map_start = mmap(curr_addr,curr_file_size,PROT_READ,MAP_SHARED,Currentfd,0); /* PORT_READ is the memory protection like fopen with 'r' flag */  
 
-    Elf32_Ehdr *elf_head = (Elf32_Ehdr*)map_start;
-    unsigned char *elf_ident = elf_head->e_ident;
-    int ascii_magic_num[] = {127, 69, 76, 70};
-    int i, elf_file_flag = 1;
+    if(debug_flag){
+        printf("\t-----Debug info-----\nCurrent fd: %d, file size: %d, map_start: %p\n\t--------------------\n", Currentfd, curr_file_size, map_start);
+    }
+    
+    elf_head = (Elf32_Ehdr*)map_start;
+    elf_ident = elf_head->e_ident;
+    elf_file_flag = 1;
+    
     for(i = 0; i < 4; i++){
-        if(!(ascii_magic_num[i] == elf_ident[i])){
+        if(ascii_magic_num[i] != elf_ident[i]){
             elf_file_flag = 0;
         }
-        printf("%c ", ascii_magic_num[i]);
     }
-    printf("\n");
+    
     if(!elf_file_flag){
-        printf("Not an elf file...");
+        printf("Not an elf file...\n");
         quit();
     }
 
-    printf("Data encoding scheme: ");
-    switch (elf_ident[EI_DATA]){
-        case 0:
-            printf("ELFDATANONE\n");
-            break;
-        
-        case 1:
-            printf("ELFDATA2LSB\n");
+    switch (elf_ident[EI_DATA]){        
+        case ELFDATA2LSB:
+            i = 0;
             break;
             
-        case 2:
-            printf("ELFDATA2MSB\n");
+        case ELFDATA2MSB:
+            i = 1;
             break;
+            
+        default:
+            i = 2;
+            break; 
     }
     
-    printf("Entry point: 0x%08x\n", elf_head->e_entry);
-
-    printf("Offset to section header table: 0x%02x\n", elf_head->e_shoff);
-
-    printf("Number of sections: %d\n", elf_head->e_shnum);
-
+    printf("1. Bytes 1,2,3 of the magic number: %c, %c, %c\n", elf_ident[EI_MAG1], elf_ident[EI_MAG2], elf_ident[EI_MAG3]);
+    printf("2. Data encoding scheme: %s\n", encoding[i]);
+    printf("3. Entry point: 0x%08x\n", elf_head->e_entry);
+    printf("4. Offset to section header table: 0x%02x\n", elf_head->e_shoff);
+    printf("5. Number of sections: %d\n", elf_head->e_shnum);
+    printf("6. Size of each section header entry: %d\n", elf_head->e_shentsize);
+    printf("7.The file offset in which the program header table resides: %d\n", elf_head->e_phoff);
+    printf("8.The number of program header entries: %d\n", elf_head->e_phnum);
+    printf("9.The size of each program header entry: %d\n", elf_head->e_phentsize);
+    
+    printf("\n");
 
 
 }
@@ -147,6 +166,14 @@ void print_symbols(){
 }
 
 void quit(){
-    stubs();
+    global_close();
     exit(0);
+}
+
+void global_close(){
+    munmap(curr_addr, curr_file_size);
+    close(Currentfd);
+    curr_addr = NULL;
+    curr_file_size = 0;  
+    Currentfd = -2;    
 }
