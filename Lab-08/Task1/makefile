@@ -7,7 +7,7 @@ all: myELF
 myELF : main_elf.o
 	$(complC) myELF main_elf.o
 
-main_elf.o : task0b.c 
+main_elf.o : task1.c 
 	$(compC) main_elf.o $^
 
 clean:
