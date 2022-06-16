@@ -27,7 +27,7 @@ void print_symbols();
 void quit();
 
 int debug_flag = 0;
-int Currentfd = -1;
+int Currentfd = -2; /* -2 just for initial value generally defeckt will be indicated by -1 */
 void* map_start;
 
 
@@ -74,19 +74,29 @@ void debug(){
 }
 
 void examine(){
-         
+    int buff_index = 0;     
     long file_size;
-    char file_name[32];
+    char file_name[32], c;
     printf("Enter ELF file name:\n");
-    fgets(file_name,32,stdin);
+    while (((c = fgetc(stdin)) != '\n') && buff_index <31 )
+    {
+        file_name[buff_index] = c;
+        buff_index++;
+    }
+    file_name[buff_index] = '\0';
+
     if(Currentfd >= 3){  /* 0-2 is the default file descriptors */
         close(Currentfd);
     }
-    Currentfd = open(file_name, O_RDONLY);
+    
+    Currentfd = open(file_name, O_RDWR);
     file_size = lseek(Currentfd,0,SEEK_END);
     lseek(Currentfd,0,SEEK_SET);
 
     map_start = mmap(NULL,file_size,PROT_READ,MAP_SHARED,Currentfd,0); /* PORT_READ is the memory protection like fopen with 'r' flag */  
+
+    printf("map_start: %x", (int)map_start);
+    printf("map_start: %c", *(int *)map_start);
 
     Elf32_Ehdr *elf_head = (Elf32_Ehdr*)map_start;
     unsigned char *elf_ident = elf_head->e_ident;
