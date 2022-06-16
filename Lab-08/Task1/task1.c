@@ -126,7 +126,7 @@ void examine(){
         quit();
     }
 
-    switch (elf_ident[EI_DATA]){        
+    switch (elf_ident[EI_DATA]){     
         case ELFDATA2LSB:
             i = 0;
             break;
@@ -156,9 +156,37 @@ void examine(){
 }
 
 void print_section_names(){
-    stubs();
-
+    unsigned char *headerTable;
+    int i;
+    unsigned int type_of_section;
+    Elf32_Ehdr *elf_head;
+    Elf32_Shdr *section_header;
     
+    if (Currentfd < 3){
+        printf("No file selected...\n");
+        return;
+    }
+        
+    elf_head = (Elf32_Ehdr*)map_start;
+    /*printf("elf_head: %p\n",  elf_head);*/
+    section_header = (Elf32_Shdr*)(map_start + elf_head->e_shoff);
+    /*printf("section_header: %p\n",  section_header);*/
+    /*printf("headerTable: %p\n", elf_head + section_header[28].sh_offset);*/
+    headerTable = (unsigned char*)(map_start + section_header[elf_head->e_shstrndx].sh_offset);
+
+
+    printf("%s \t %s\t\t\t %s\t %s\t %s\t %s\n", "[#]", "Name", "Address", "Offset", "Size", "Type");    
+    
+    for (i = 1; i < elf_head->e_shnum; i++){
+        type_of_section = section_header[i].sh_type;
+
+        printf("[%d] \t %s\t\t %x\t\t %x\t %x\t %d\n", i, headerTable + section_header[i].sh_name, section_header[i].sh_addr,
+            section_header[i].sh_offset, section_header[i].sh_size, type_of_section);
+        
+        if (debug_flag){
+            printf("\t-----Debug: %x\n", section_header[elf_head->e_shstrndx].sh_offset + section_header[i].sh_offset);
+        }
+    }
 }
 
 void print_symbols(){
