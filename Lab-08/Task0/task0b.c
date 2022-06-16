@@ -95,9 +95,6 @@ void examine(){
 
     map_start = mmap(NULL,file_size,PROT_READ,MAP_SHARED,Currentfd,0); /* PORT_READ is the memory protection like fopen with 'r' flag */  
 
-    printf("map_start: %x", (int)map_start);
-    printf("map_start: %c", *(int *)map_start);
-
     Elf32_Ehdr *elf_head = (Elf32_Ehdr*)map_start;
     unsigned char *elf_ident = elf_head->e_ident;
     int ascii_magic_num[] = {127, 69, 76, 70};
