@@ -35,6 +35,41 @@ char curr_file_name[32];
 
 void* map_start;
 
+struct mytype_map{
+    unsigned int number;
+    char* name;
+};
+
+
+struct mytype_map type_map[]={
+    {0, "NULL"},
+    {1, "PROGBITS"},
+    {2, "SYMTAB"},
+    {3, "STRTAB"},
+    {4, "RELA"},
+    {5, "HASH"},
+    {6, "DYNAMIC"},
+    {7, "NOTE"},
+    {8, "NOBITS"},
+    {9, "REL"},
+    {10, "SHLIB"},
+    {11, "DYNSYM"},
+    {14, "INIT_ARRAY"},
+    {15, "FINI_ARRAY"},
+    {16, "PREINIT_ARRAY"},
+    {17, "GROUP"},
+    {18, "SYMTAB_SHNDX"},
+    {19, "NUM"},
+    {0x60000000, "LOOS"},
+    {0x70000000, "LOPROC"},
+    {0x7fffffff, "HIPROC"},
+    {0x80000000, "LOUSER"},
+    {0x8fffffff, "HIUSER"},
+    {0x6ffffff6, "GNU_HASH"},
+    {0x6fffffff, "VERSYM"},
+    {0x6ffffffe, "VERNEED"}
+};
+
 
 int main(int argc, char **argv){
     int i, choise_index;
@@ -168,20 +203,48 @@ void print_section_names(){
     }
         
     elf_head = (Elf32_Ehdr*)map_start;
-    /*printf("elf_head: %p\n",  elf_head);*/
     section_header = (Elf32_Shdr*)(map_start + elf_head->e_shoff);
-    /*printf("section_header: %p\n",  section_header);*/
-    /*printf("headerTable: %p\n", elf_head + section_header[28].sh_offset);*/
     headerTable = (unsigned char*)(map_start + section_header[elf_head->e_shstrndx].sh_offset);
 
-
-    printf("%s \t %s\t\t\t %s\t %s\t %s\t %s\n", "[#]", "Name", "Address", "Offset", "Size", "Type");    
-    
-    for (i = 1; i < elf_head->e_shnum; i++){
+    printf("%s  %-18s\t %-8s\t %-6s\t %-6s\t %-12s\n", "[#]", "Name", "Address", "Offset", "Size", "Type");    
+    int type_index = 0;
+    for (i = 0; i < elf_head->e_shnum; i++){
         type_of_section = section_header[i].sh_type;
+        type_index = type_of_section;
+        if((type_of_section > 11) && (type_of_section < 20)){
+            type_index = type_index - 2;
+        }
+        if(type_of_section > 19){
+            switch(type_of_section){
+                case 0x60000000:
+                    type_index = 18;
+                    break;
+                case 0x70000000:
+                    type_index = 19;
+                    break;
+                case 0x7fffffff:
+                    type_index = 20;
+                    break;
+                case 0x80000000:
+                    type_index = 21;
+                    break;
+                case 0x8fffffff:
+                    type_index = 22;
+                    break;
+                case 0x6ffffff6:
+                    type_index = 23;
+                    break;
+                case 0x6fffffff:
+                    type_index = 24;
+                    break;
+                case 0x6ffffffe:
+                    type_index = 25;
+                    break;
+            }
+        }
 
-        printf("[%d] \t %s\t\t %x\t\t %x\t %x\t %d\n", i, headerTable + section_header[i].sh_name, section_header[i].sh_addr,
-            section_header[i].sh_offset, section_header[i].sh_size, type_of_section);
+        printf("[%2d] %-18s\t %08x\t %06x\t %06x\t %-12s\n", i, headerTable + section_header[i].sh_name, section_header[i].sh_addr,
+            section_header[i].sh_offset, section_header[i].sh_size, type_map[type_index].name);
         
         if (debug_flag){
             printf("\t-----Debug: %x\n", section_header[elf_head->e_shstrndx].sh_offset + section_header[i].sh_offset);
