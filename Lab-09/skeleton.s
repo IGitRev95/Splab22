@@ -53,54 +53,16 @@
 	
 	global _start
 
-;;;;;;;;;;;;;;;;;;;;;;;;;
-
-%macro print_OutStr 0
-write 1, OutStr, OutStr_len
-%endmacro
-
-%macro print_Failstr 0
-write 1, Failstr, Failstr_len
-%endmacro
-
-%macro print_openFail 0
-write 1, OpenErrStr, OpenErrStr_len
-%endmacro
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;
 	section .text
 _start:	
 	push	ebp
 	mov	ebp, esp
 	sub	esp, STK_RES            ; Set up ebp and reserve space on the stack for local storage
 	;CODE START
-	pushad
-	open FileName,RDWR,0777
-	mov [ebp-4], eax  ;save fd in local vars
-	cmp dword[ebp-4], -1
-    jle .print_openFail
-    mov ecx,ebp
-    sub ecx,8;
-    read dword[ebp-4],ecx,4; read from eax that is in ebp-4 the magic numbers
-    cmp byte[ebp-8], 0x7f; elfmago0
-    jne .print_Failstr;
-    cmp byte[ebp-8+1],'E'; elfmago1
-    jne .print_Failstr;
-    cmp byte[ebp-8+2], 'L'; elfmago2
-    jne .print_Failstr;
-    cmp byte[ebp-8+3],'F'; elfmago3
-    jne .print_Failstr;
+	
 
-	.print_OutStr:
-		print_OutStr
-		jmp VirusExit
-	.print_Failstr:
-		print_Failstr
-		jmp VirusExit
-	.print_openFail:
-		print_openFail
-		jmp VirusExit
+
+
 
 
 VirusExit:
@@ -109,11 +71,8 @@ VirusExit:
 	
 FileName:	db "ELFexec1", 0
 OutStr:		db "The lab 9 proto-virus strikes!", 10, 0
-OutStr_len: equ $-OutStr
 Failstr:        db "perhaps not", 10 , 0
-Failstr_len: equ $-Failstr
-OpenErrStr: db "File open fail", 10, 0
-OpenErrStr_len: equ $-OpenErrStr
+	
 
 get_my_loc:
 	call next_i
