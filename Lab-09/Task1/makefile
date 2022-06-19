@@ -9,3 +9,6 @@ $(file_name).o: skeleton.s
 .PHONY: clean
 clean: 
 	rm -f *.o $(file_name)
+
+bindis:
+	ndisasm -b 32 bin_file > bin_file.asm
