@@ -53,9 +53,12 @@
 	
 global _start
 
+;%define infectionStr db "The lab 9 proto-virus strikes!", 10, 0
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 %macro print_OutStr 0
+;write 1, infectionStr, OutStr_len
 write 1, OutStr, OutStr_len
 %endmacro
 
