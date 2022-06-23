@@ -272,7 +272,7 @@ VirusExit_with_err:
 		jmp .exit
 
 	.print_openFail:
-		print_openFail
+		;print_openFail
 		reset_regs
 		get_symbal_rt_address_to_ecx PreviousEntryPoint
 		mov eax,ecx
